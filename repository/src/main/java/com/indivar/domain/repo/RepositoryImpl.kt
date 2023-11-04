@@ -172,11 +172,18 @@ val FixtureItem.fixture: Fixture
         matchScores = matchScore?.matchScores,
     )
 
-val FixtureScore.matchScores: MatchScores
-    get() = MatchScores(
-        team1Scores = this.team1Score.score,
-        team2Scores = this.team2Score.score,
-    )
+val FixtureScore.matchScores: MatchScores?
+    get() = team1Score?.let {
+        team2Score?.let {
+            MatchScores(
+                team1Scores = team1Score.score,
+                team2Scores = team2Score.score,
+            )
+        } ?: MatchScores(
+            team1Scores = team1Score.score,
+            team2Scores = null,
+        )
+    }
 val TeamScore.score: Scores
     get() = Scores(
         innings1 = this.inngs1?.teamInnings,
@@ -186,12 +193,14 @@ val TeamScore.score: Scores
 val InningsScore.teamInnings: TeamInnings
     get() = TeamInnings(
         inningsId = inningsId,
-        runs = runs,
-        wickets = wickets,
-        overs = Overs(
-            completeOvers = overs.toInt(),
-            ballsInCurrentOver = ((overs - overs.toInt()) * 10).toInt()
-        )
+        runs = runs ?: 0,
+        wickets = wickets ?: 0,
+        overs = overs?.let { overs ->
+            Overs(
+                completeOvers = overs.toInt(),
+                ballsInCurrentOver = ((overs - overs.toInt()) * 10).toInt()
+            )
+        } ?: Overs(0, 0)
     )
 val VenueInfo.venue: Venue
     get() = Venue(

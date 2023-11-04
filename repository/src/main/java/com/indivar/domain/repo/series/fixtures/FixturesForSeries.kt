@@ -75,8 +75,8 @@ data class FixtureInfo(
 )
 
 data class FixtureScore(
-    val team1Score: TeamScore,
-    val team2Score: TeamScore,
+    val team1Score: TeamScore?,
+    val team2Score: TeamScore?,
 )
 
 data class TeamScore(
@@ -86,9 +86,9 @@ data class TeamScore(
 
 data class InningsScore(
     val inningsId: Int,
-    val runs: Int,
-    val wickets: Int,
-    val overs: Float,
+    val runs: Int?,
+    val wickets: Int?,
+    val overs: Float?,
 )
 
 data class VenueInfo(
