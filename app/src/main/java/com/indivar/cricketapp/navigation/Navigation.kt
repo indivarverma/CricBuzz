@@ -1,5 +1,6 @@
 package com.indivar.cricketapp.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,8 +17,7 @@ import androidx.navigation.navigation
 import com.indivar.core.Navigator
 import com.indivar.cricketapp.ui.fixtures.list.SeriesFixturesListView
 import com.indivar.cricketapp.ui.match.detail.ui.MatchDetailViewScreen
-import com.indivar.cricketapp.ui.series.detail.SeriesDetailViewScreen
-import com.indivar.cricketapp.ui.series.groups.ui.SeriesGroupsViewScreen
+import com.indivar.cricketapp.ui.series.listings.SeriesListingsViewScreen
 import com.indivar.cricketapp.utils.activity
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.onEach
 sealed class Screen(val route: String) {
 
     object MatchDetailScreen : Screen(route = "match_detail/{matchId}")
-    object SeriesGroupsScreen : Screen(route = "series_list")
+    object SeriesListingsScreen : Screen(route = "series_listings/{series_type}")
     object SeriesGroupDetailScreen : Screen(route = "series_group/{series_group_data}")
     object SeriesFixturesListScreen : Screen(route = "series_fixtures/{series_id}")
     object StartScreen : Screen(route = "start")
@@ -77,15 +77,21 @@ fun Navigation(navigator: Navigator) {
 
 fun NavGraphBuilder.SeriesGraph() {
     navigation(
-        startDestination = Screen.SeriesGroupsScreen.route,
+        startDestination = Screen.SeriesListingsScreen.route,
         route = Screen.StartScreen.route
     ) {
         composable(
-            route = Screen.SeriesGroupsScreen.route,
+            route = Screen.SeriesListingsScreen.route,
+            arguments = listOf(
+                navArgument("series_type") {
+                    defaultValue = "international"
+                    type = NavType.StringType
+                }
+            )
 
             ) {
 
-            SeriesGroupsViewScreen(
+            SeriesListingsViewScreen(
                 viewModel = hiltViewModel(),
             )
 
@@ -100,7 +106,7 @@ fun NavGraphBuilder.SeriesGraph() {
 
             ) {
 
-            SeriesDetailViewScreen(
+            SeriesListingsViewScreen(
                 hiltViewModel()
             )
 

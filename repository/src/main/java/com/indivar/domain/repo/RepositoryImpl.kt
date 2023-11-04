@@ -8,9 +8,9 @@ import com.indivar.domain.repo.match.details.Officials
 import com.indivar.domain.repo.match.details.Team
 import com.indivar.domain.repo.series.fixtures.FixtureItem
 import com.indivar.domain.repo.series.fixtures.FixturesForSeries
-import com.indivar.domain.repo.series.groups.AllSeriesDetail
-import com.indivar.domain.repo.series.groups.SeriesItem
-import com.indivar.domain.repo.series.groups.SeriesSet
+import com.indivar.domain.repo.series.listings.NetworkSeries
+import com.indivar.domain.repo.series.listings.NetworkSeriesGroup
+import com.indivar.domain.repo.series.listings.NetworkSeriesListings
 import com.indivar.domain.usecases.DetailedServerError
 import com.indivar.models.Boundary
 import com.indivar.models.BoundaryType
@@ -24,10 +24,11 @@ import com.indivar.models.match.MatchOfficials
 import com.indivar.models.match.Overs
 import com.indivar.models.match.ScoreCard
 import com.indivar.models.series.Fixture
+import com.indivar.models.series.SeriesGroup
 import com.indivar.models.series.Series
 import com.indivar.models.series.SeriesFixtures
-import com.indivar.models.series.SeriesGroup
 import com.indivar.models.series.SeriesGroups
+import com.indivar.models.series.SeriesListings
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,6 +37,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import retrofit2.HttpException
 import java.io.IOException
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 import com.indivar.models.Team as ModelsTeam
 
@@ -47,10 +52,32 @@ class RepositoryImpl @Inject constructor(
         requireNotNull(networkApi.getMatchDetails(matchId).match)
     }
 
-    override suspend fun getSeriesGroups(): Response<SeriesGroups> = makeRequest {
-        val v = networkApi.getAllSeries()
-        v.seriesGroups
+
+    override suspend fun getSeriesListings(type: String): Response<SeriesListings> = makeRequest {
+        val v = networkApi.getSeriesListings(type)
+        v.seriesListings
     }
+
+    private val NetworkSeriesListings.seriesListings: SeriesListings
+        get() = SeriesListings(
+            seoTitle = this.appIndex.seoTitle,
+            webURL = this.appIndex.webURL,
+            series = this.seriesMapProto.map { it.seriesGroup }
+        )
+
+    private val NetworkSeriesGroup.seriesGroup: SeriesGroup
+        get() = SeriesGroup(
+            dateTitle = this.date,
+            list = this.series.map { it.seriesitem }
+        )
+
+    private val NetworkSeries.seriesitem: Series
+        get() = Series(
+            id = this.id,
+            name = this.name,
+            startDate = Instant.ofEpochMilli(this.startDt).atZone(ZoneId.systemDefault()).toLocalDate(),
+            endDate = Instant.ofEpochMilli(this.endDt).atZone(ZoneId.systemDefault()).toLocalDate(),
+        )
 
     private suspend fun <T> makeRequest(requestBlock: suspend () -> T): Response<T> {
         return withContext(defaultDispatcher) {
@@ -114,26 +141,7 @@ val FixtureItem.fixture: Fixture
         date = date,
     )
 
-val AllSeriesDetail.seriesGroups: SeriesGroups
-    get() = SeriesGroups(
-        title = this.meta.title,
-        description = this.meta.description,
-        seriesGroup = this.results.map { it.seriesGroup }
-    )
 
-val SeriesSet.seriesGroup: SeriesGroup
-    get() = SeriesGroup(
-        type = this.type,
-        series = this.items.map { it.series }
-    )
-
-val SeriesItem.series: Series
-    get() = Series(
-        id = this.id,
-        name = this.name,
-        status = this.status,
-        season = this.season,
-    )
 val Team.team: ModelsTeam
     get() = ModelsTeam(
         id = this.id,

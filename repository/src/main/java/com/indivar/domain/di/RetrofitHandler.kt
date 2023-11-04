@@ -2,6 +2,7 @@ package com.indivar.domain.di
 
 import com.facebook.flipper.plugins.network.FlipperOkhttpInterceptor
 import com.facebook.flipper.plugins.network.NetworkFlipperPlugin
+import com.indivar.common.adapters.LocalDateAdapter
 import com.indivar.common.adapters.LocalDateTimeAdapter
 import com.indivar.common.adapters.ZonedDateTimeAdapter
 import com.indivar.common.api.NetworkApi
@@ -19,6 +20,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import javax.inject.Singleton
@@ -66,7 +68,7 @@ class RetrofitHandler {
                     "X-RapidAPI-Key",
                     "da97bb56c8mshe96fe71c7cbe265p19f1fbjsn93fb34f2408f"
                 )
-                requestBuilder.addHeader("X-RapidAPI-Host", "cricket-live-data.p.rapidapi.com")
+                requestBuilder.addHeader("X-RapidAPI-Host", "cricbuzz-cricket.p.rapidapi.com")
                 it.proceed(requestBuilder.build())
 
 
@@ -77,6 +79,7 @@ class RetrofitHandler {
         val moshi = Moshi.Builder()
             .add(ZonedDateTime::class.java, ZonedDateTimeAdapter())
             .add(LocalDateTime::class.java, LocalDateTimeAdapter())
+            .add(LocalDate::class.java, LocalDateAdapter())
             .addLast(KotlinJsonAdapterFactory()).build()
         return Retrofit.Builder().baseUrl(SERVER_URL)
             .client(okhttpClientBuilder.build())
@@ -84,6 +87,6 @@ class RetrofitHandler {
             .build()
     }
 
-    private val SERVER_URL = "https://cricket-live-data.p.rapidapi.com"
+    private val SERVER_URL = "https://cricbuzz-cricket.p.rapidapi.com"
 
 }

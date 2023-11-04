@@ -4,7 +4,7 @@ import com.indivar.core.Base64Encoder
 import com.indivar.core.Navigator
 import com.indivar.models.series.Fixture
 import com.indivar.models.series.Series
-import com.indivar.models.series.SeriesGroup
+import com.indivar.models.series.SeriesListings
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.scopes.ActivityRetainedScoped
@@ -20,11 +20,11 @@ class NavigatorImpl @Inject constructor(
         Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
     }
 
-    override suspend fun navigateToSeries(seriesGroup: SeriesGroup) =
+    override suspend fun navigateToSeries(seriesListings: SeriesListings) =
         sharedFlow.emit(
             Screen.SeriesGroupDetailScreen.route.replace(
                 "{series_group_data}",
-                encoder.encode(moshi.adapter(SeriesGroup::class.java).toJson(seriesGroup))
+                encoder.encode(moshi.adapter(SeriesListings::class.java).toJson(seriesListings))
             )
         )
 
