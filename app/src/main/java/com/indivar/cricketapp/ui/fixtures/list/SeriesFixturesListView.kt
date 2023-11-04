@@ -1,8 +1,13 @@
 package com.indivar.cricketapp.ui.fixtures.list
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +32,7 @@ import com.indivar.core.fixtures.list.domain.viewmodel.SeriesFixturesListEffect
 import com.indivar.cricketapp.collectAsEffect
 import com.indivar.cricketapp.ui.common.LoadingScreen
 import com.indivar.models.series.Fixture
+import com.indivar.models.series.FixtureGroup
 import kotlinx.coroutines.Dispatchers
 import java.time.format.DateTimeFormatter
 
@@ -72,87 +78,122 @@ fun SeriesFixturesListView(
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun FixturesListView(
-    data: List<Fixture>,
-    onItemClick: (Fixture) -> Unit,
+    data: List<FixtureGroup>,
+    onItemClick: Fixture.() -> Unit,
     modifier: Modifier = Modifier
 ) {
 
-    LazyColumn(modifier = modifier) {
-
-
-        items(items = data, key = { it.id }) { fixture ->
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(8.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable {
-                            onItemClick.invoke(fixture)
-                        }
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    fixture.date?.let { date ->
-                        Text(
-                            text = DateTimeFormatter.ofPattern("MMMM dd, yyyy")
-                                .format(date),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-
-                    Text(
-                        text = fixture.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 2
-                    )
-                    Text(
-                        text = fixture.subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2
-                    )
-                    Text(
-                        text = fixture.venue,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(title = {
+                Text(
+                    text = "Fixtures",
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                )
+            })
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier.padding(it),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
+            data.onEach { group ->
+                stickyHeader {
                     Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                            .border(width = 2.dp, color = MaterialTheme.colorScheme.outline)
+                            .padding(horizontal = 24.dp, vertical = 8.dp)
                     ) {
                         Text(
-                            text = fixture.home.name,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        Text(
-                            text = "VS",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        Text(
-                            text = fixture.away.name,
-                            style = MaterialTheme.typography.bodySmall,
+                            text = group.key,
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = fixture.status,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        Text(
-                            text = fixture.result,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-
                 }
+                items(group.fixtures) { fixture ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth().wrapContentHeight().clickable {
+                            fixture.onItemClick()
+                        }) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+
+                                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                                verticalArrangement = Arrangement.SpaceEvenly,
+                                horizontalAlignment = Alignment.Start,
+                            ) {
+                                Text(
+                                    text = fixture.matchDesc,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                ) {
+                                    Text(
+                                        text = fixture.team1.name,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Text(
+                                        modifier = Modifier.padding(horizontal = 16.dp),
+                                        text = " vs ",
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Text(
+                                        text = fixture.team2.name,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                ) {
+                                    Text(
+                                        text = DateTimeFormatter.ofPattern("MMMM dd, yyyy")
+                                            .format(fixture.startDate),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Text(
+                                        modifier = Modifier.padding(horizontal = 16.dp),
+                                        text = "-",
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Text(
+                                        text = DateTimeFormatter.ofPattern("MMMM dd, yyyy")
+                                            .format(fixture.endDate),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                                Text(
+                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    text = fixture.result,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+
+                            }
+                        }
+                    }
+                }
+
             }
 
         }

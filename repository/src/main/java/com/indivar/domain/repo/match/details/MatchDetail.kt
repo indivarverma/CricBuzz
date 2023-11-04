@@ -41,9 +41,10 @@ data class MatchSummary(
 )
 
 data class Team(
-    val id: Int,
-    val name: String,
-    val code: String,
+    val teamId: Int,
+    val imageId: Int,
+    val teamName: String,
+    val teamSName: String,
 )
 
 data class Officials(

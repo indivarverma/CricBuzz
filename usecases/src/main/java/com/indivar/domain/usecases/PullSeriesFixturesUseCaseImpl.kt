@@ -13,25 +13,9 @@ class PullSeriesFixturesUseCaseImpl @Inject constructor(
 
         when (val response = networkRepository.fetchSeriesFixtures(seriesId)) {
             is Response.Success -> response.copy(
-                data = response.data.copy(
-                    fixtures = response.data.fixtures.sortedWith { first, second ->
-                        val firstDate = first.date
-                        val secondDate = second.date
-                        when {
-                            firstDate != null && secondDate != null -> {
-                                if (firstDate.isAfter(secondDate)) -1
-                                else if (firstDate.isBefore(secondDate)) 1
-                                else first.id - second.id
-                            }
-
-                            firstDate == null && secondDate == null -> first.id - second.id
-                            else -> {
-                                if (firstDate == null) -1 else 1
-                            }
-                        }
-                    }
-                )
+                data = response.data
             )
+            
 
             is Response.Error -> response
         }

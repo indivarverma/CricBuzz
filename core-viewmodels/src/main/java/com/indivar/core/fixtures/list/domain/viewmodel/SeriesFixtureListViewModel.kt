@@ -7,6 +7,7 @@ import com.indivar.core.common.domain.viewmodel.MviViewModel
 import com.indivar.core.data.Response
 import com.indivar.core.fixtures.list.domain.usecase.PullSeriesFixturesUseCase
 import com.indivar.models.series.Fixture
+import com.indivar.models.series.FixtureGroup
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,7 +25,7 @@ class SeriesFixtureListViewModel @Inject constructor(
     }
 
     data class SeriesFixturesListDataState(
-        val fixtures: List<Fixture>,
+        val fixtures: List<FixtureGroup>,
         val isError: Boolean,
         val isLoading: Boolean,
     )
@@ -85,7 +86,7 @@ class SeriesFixtureListViewModel @Inject constructor(
 }
 
 data class SeriesFixturesListViewState(
-    val fixtures: List<Fixture>,
+    val fixtures: List<FixtureGroup>,
     val isError: Boolean,
     val isLoading: Boolean,
     val onFixtureClicked: (Fixture) -> Unit,

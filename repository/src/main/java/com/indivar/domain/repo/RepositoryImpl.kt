@@ -7,7 +7,13 @@ import com.indivar.domain.repo.match.details.MatchInning
 import com.indivar.domain.repo.match.details.Officials
 import com.indivar.domain.repo.match.details.Team
 import com.indivar.domain.repo.series.fixtures.FixtureItem
+import com.indivar.domain.repo.series.fixtures.FixtureScore
 import com.indivar.domain.repo.series.fixtures.FixturesForSeries
+import com.indivar.domain.repo.series.fixtures.InningsScore
+import com.indivar.domain.repo.series.fixtures.MatchDetailsEntry
+import com.indivar.domain.repo.series.fixtures.MatchDetailsMap
+import com.indivar.domain.repo.series.fixtures.TeamScore
+import com.indivar.domain.repo.series.fixtures.VenueInfo
 import com.indivar.domain.repo.series.listings.NetworkSeries
 import com.indivar.domain.repo.series.listings.NetworkSeriesGroup
 import com.indivar.domain.repo.series.listings.NetworkSeriesListings
@@ -24,11 +30,15 @@ import com.indivar.models.match.MatchOfficials
 import com.indivar.models.match.Overs
 import com.indivar.models.match.ScoreCard
 import com.indivar.models.series.Fixture
-import com.indivar.models.series.SeriesGroup
+import com.indivar.models.series.FixtureGroup
+import com.indivar.models.series.MatchScores
+import com.indivar.models.series.Scores
 import com.indivar.models.series.Series
 import com.indivar.models.series.SeriesFixtures
-import com.indivar.models.series.SeriesGroups
+import com.indivar.models.series.SeriesGroup
 import com.indivar.models.series.SeriesListings
+import com.indivar.models.series.TeamInnings
+import com.indivar.models.series.Venue
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineDispatcher
@@ -38,8 +48,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import retrofit2.HttpException
 import java.io.IOException
 import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.inject.Inject
 import com.indivar.models.Team as ModelsTeam
@@ -51,7 +59,6 @@ class RepositoryImpl @Inject constructor(
     override suspend fun pullMatchDetails(matchId: Int): Response<Match> = makeRequest {
         requireNotNull(networkApi.getMatchDetails(matchId).match)
     }
-
 
     override suspend fun getSeriesListings(type: String): Response<SeriesListings> = makeRequest {
         val v = networkApi.getSeriesListings(type)
@@ -75,7 +82,8 @@ class RepositoryImpl @Inject constructor(
         get() = Series(
             id = this.id,
             name = this.name,
-            startDate = Instant.ofEpochMilli(this.startDt).atZone(ZoneId.systemDefault()).toLocalDate(),
+            startDate = Instant.ofEpochMilli(this.startDt).atZone(ZoneId.systemDefault())
+                .toLocalDate(),
             endDate = Instant.ofEpochMilli(this.endDt).atZone(ZoneId.systemDefault()).toLocalDate(),
         )
 
@@ -124,30 +132,80 @@ class RepositoryImpl @Inject constructor(
 
 val FixturesForSeries.seriesFixtures: SeriesFixtures
     get() = SeriesFixtures(
-        fixtures = this.results.map(FixtureItem::fixture)
+        fixtures = this.matchDetails.mapNotNull(MatchDetailsEntry::fixtures)
     )
+
+val MatchDetailsEntry.fixtures: FixtureGroup?
+    get() = matchDetailsMap?.fixtureGroup
+
+val MatchDetailsMap.fixtureGroup: FixtureGroup
+    get() = FixtureGroup(
+        key = this.key,
+        seriesId = this.seriesId,
+        fixtures = this.match.map(FixtureItem::fixture)
+    )
+
 
 val FixtureItem.fixture: Fixture
     get() = Fixture(
-        id = id,
-        seriesId = seriesId,
-        title = title,
-        subtitle = subtitle,
-        home = home.team,
-        away = away.team,
-        status = status,
-        venue = venue,
-        result = result,
-        date = date,
+
+        id = matchInfo.id,
+        seriesId = matchInfo.seriesId,
+        seriesName = matchInfo.seriesName,
+        matchDesc = matchInfo.matchDesc,
+        matchFormat = matchInfo.matchFormat,
+        startDate = Instant.ofEpochMilli(matchInfo.startDate)
+            .atZone(ZoneId.of(matchInfo.venue.timezone)).toLocalDate(),
+        endDate = Instant.ofEpochMilli(matchInfo.endDate)
+            .atZone(ZoneId.of(matchInfo.venue.timezone)).toLocalDate(),
+        state = matchInfo.state,
+        result = matchInfo.status,
+        team1 = matchInfo.team1.team,
+        team2 = matchInfo.team2.team,
+        venue = matchInfo.venue.venue,
+        currBatTeamId = matchInfo.currBatTeamId,
+        seriesStartDate = Instant.ofEpochMilli(matchInfo.seriesStartDt)
+            .atZone(ZoneId.of(matchInfo.venue.timezone)).toLocalDate(),
+        seriesEndDate = Instant.ofEpochMilli(matchInfo.seriesEndDt)
+            .atZone(ZoneId.of(matchInfo.venue.timezone)).toLocalDate(),
+        isTimeAnnounced = matchInfo.isTimeAnnounced,
+        matchScores = matchScore?.matchScores,
     )
 
+val FixtureScore.matchScores: MatchScores
+    get() = MatchScores(
+        team1Scores = this.team1Score.score,
+        team2Scores = this.team2Score.score,
+    )
+val TeamScore.score: Scores
+    get() = Scores(
+        innings1 = this.inngs1?.teamInnings,
+        innings2 = this.inngs2?.teamInnings,
+    )
 
+val InningsScore.teamInnings: TeamInnings
+    get() = TeamInnings(
+        inningsId = inningsId,
+        runs = runs,
+        wickets = wickets,
+        overs = Overs(
+            completeOvers = overs.toInt(),
+            ballsInCurrentOver = ((overs - overs.toInt()) * 10).toInt()
+        )
+    )
+val VenueInfo.venue: Venue
+    get() = Venue(
+        id = id,
+        ground = ground,
+        city = city,
+        timezone = timezone,
+    )
 val Team.team: ModelsTeam
     get() = ModelsTeam(
-        id = this.id,
-        name = this.name,
-        code = this.code,
-        players = emptyList(),
+        id = this.teamId,
+        name = this.teamName,
+        code = this.teamSName,
+        imageId = this.imageId,
     )
 val MatchDetail.match: Match?
     get() = this.results?.let {
