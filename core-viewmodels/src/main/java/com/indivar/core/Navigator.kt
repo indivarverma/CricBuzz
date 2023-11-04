@@ -10,5 +10,5 @@ interface Navigator {
     val sharedFlow: MutableSharedFlow<String>
     suspend fun navigateToSeries(seriesListings: SeriesListings)
     suspend fun navigateToSeriesFixtures(series: Series)
-    suspend fun navigateToFixture(fixture: Fixture)
+    suspend fun navigateToFixture(fixtureId: Int)
 }

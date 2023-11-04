@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.indivar.core.Navigator
 import com.indivar.core.common.domain.viewmodel.MviViewModel
 import com.indivar.core.data.Response
+import com.indivar.core.fixtures.list.domain.models.FixtureCard
+import com.indivar.core.fixtures.list.domain.models.SeriesFixturesListEffect
+import com.indivar.core.fixtures.list.domain.models.SeriesFixturesListViewState
+import com.indivar.core.fixtures.list.domain.models.viewdata
 import com.indivar.core.fixtures.list.domain.usecase.PullSeriesFixturesUseCase
 import com.indivar.models.series.Fixture
 import com.indivar.models.series.FixtureGroup
@@ -70,29 +74,18 @@ class SeriesFixtureListViewModel @Inject constructor(
 
     }
 
-    private fun onFixtureClicked(fixture: Fixture) {
+    private fun onFixtureClicked(fixture: FixtureCard) {
         viewModelScope.launch {
-            navigator.navigateToFixture(fixture)
+            navigator.navigateToFixture(fixture.id)
         }
     }
 
     override fun mapState(dataState: SeriesFixturesListDataState): SeriesFixturesListViewState =
         SeriesFixturesListViewState(
-            fixtures = dataState.fixtures,
+            fixtures = dataState.fixtures.viewdata,
             isError = dataState.isError,
             isLoading = dataState.isLoading,
             onFixtureClicked = ::onFixtureClicked,
         )
-}
-
-data class SeriesFixturesListViewState(
-    val fixtures: List<FixtureGroup>,
-    val isError: Boolean,
-    val isLoading: Boolean,
-    val onFixtureClicked: (Fixture) -> Unit,
-)
-
-sealed class SeriesFixturesListEffect {
-
 }
 

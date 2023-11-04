@@ -37,11 +37,11 @@ class NavigatorImpl @Inject constructor(
         )
     }
 
-    override suspend fun navigateToFixture(fixture: Fixture) {
+    override suspend fun navigateToFixture(fixtureId: Int) {
         sharedFlow.emit(
             Screen.MatchDetailScreen.route.replace(
                 "{matchId}",
-                fixture.id.toString()
+                fixtureId.toString()
             )
         )
     }
